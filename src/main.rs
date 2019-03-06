@@ -46,17 +46,29 @@ fn main() {
             Err(e) => Err(warp::reject::custom(e)),
         });
 
+    let json_body = warp::body::content_length_limit(1024 * 16).and(warp::body::json());
+
     let api_v1 = warp::path("api").and(warp::path("v1"));
 
     let blog = api_v1.and(warp::path("blog"));
+
     let blog_index = blog.and(warp::path::end());
-    // GET /api/blog
+
+    // GET /api/v1/blog
     let blog_list = warp::get2()
         .and(blog_index)
-        .and(pg)
-        .and_then(show_posts);
+        .and(pg.clone())
+        .and_then(list_posts);
 
-    let api = blog_list;
+    // POST /api/v1/blog
+    let blog_post = warp::post2()
+        .and(blog_index)
+        .and(json_body)
+        .and(pg.clone())
+        .and_then(create_post)
+        .map(|reply| warp::reply::with_status(reply, StatusCode::CREATED));
+
+    let api = blog_list.or(blog_post);
 
     let index = warp::fs::file("static/index.html").and(warp::path::end());
 
@@ -72,18 +84,33 @@ fn establish_pool(database_url: String) -> PgPool {
     Pool::new(manager).expect("Postgres connection pool could not be created")
 }
 
-//API handlers
+// API handlers
 
-fn show_posts(connection: PooledPg) -> Result<impl warp::Reply, warp::Rejection> {
+/// GET api/v1/blog
+fn list_posts(connection: PooledPg) -> Result<impl warp::Reply, warp::Rejection> {
+    debug!("List blog posts");
+
     use self::schema::posts::dsl::*;
 
-    let blog_posts = posts
+    posts
         .filter(published.eq(true))
         .limit(5)
-        .load::<Post>(&connection);
+        .load::<Post>(&connection)
+        .map(|blog_posts| warp::reply::json(&blog_posts))
+        .map_err(|e| warp::reject::custom(e))
 
-    match blog_posts {
-        Ok(xs) => Ok(warp::reply::json(&xs)),
-        Err(e) => Err(warp::reject::custom(e)),
-    }
+}
+
+/// POST api/v1/blog with JSON body
+fn create_post(create: NewPost, connection: PooledPg) -> Result<impl warp::Reply, warp::Rejection>  {
+    debug!("Create blog post {:?}", &create);
+
+    use self::schema::posts;
+
+    diesel::insert_into(posts::table)
+        .values(&create)
+        .get_result(&connection)
+        .map(|post: Post| warp::reply::json(&post))
+        .map_err(|e| warp::reject::custom(e))
+
 }
