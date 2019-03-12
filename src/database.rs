@@ -51,3 +51,17 @@ pub fn update_post(id: i32, update: NewPost, conn: PooledPg) -> Result<Post> {
                 
 
 }
+
+/// Publish a post
+pub fn publish_post(id: i32, conn: PooledPg) -> Result<Post> {
+        debug!("Publish blog post {}", id);
+
+        use super::schema::posts::dsl::{posts, published};
+
+        diesel::update(posts.find(id))
+                .set(published.eq(true))
+                .get_result(&conn)
+                .map_err(|e| ServerError::Database(e))
+                
+
+}

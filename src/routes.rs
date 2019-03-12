@@ -20,7 +20,7 @@ pub fn routes(database_pool: PgPool) -> warp::filters::BoxedFilter<(impl warp::R
 
     let blog_index = blog.and(warp::path::end());
 
-    let blog_id = blog.and(warp::path::param::<u16>()).and(warp::path::end());
+    let blog_id = blog.and(warp::path::param::<u16>());
 
     // GET /api/v1/blog
     let blog_list = warp::get2()
@@ -42,7 +42,14 @@ pub fn routes(database_pool: PgPool) -> warp::filters::BoxedFilter<(impl warp::R
         .and(pg.clone())
         .and_then(update_post);
 
-    let api = blog_list.or(blog_create).or(blog_update);
+    // PUT /api/v1/blog/:id/publish
+    let blog_publish = warp::put2()
+        .and(blog_id)
+        .and(warp::path("publish"))
+        .and(pg.clone())
+        .and_then(publish_post);
+
+    let api = blog_list.or(blog_create).or(blog_update).or(blog_publish);
 
     let index = warp::fs::file("static/index.html").and(warp::path::end());
 
@@ -72,6 +79,13 @@ fn update_post(
     conn: PooledPg,
 ) -> Result<impl warp::Reply, warp::Rejection> {
     database::update_post(id.into(), update, conn)
+        .map(|ref post| warp::reply::json(post))
+        .map_err(|e| e.into())
+}
+
+/// PUT /api/v1/blog/:id/publish
+fn publish_post(id: u16, conn: PooledPg) -> Result<impl warp::Reply, warp::Rejection> {
+    database::publish_post(id.into(), conn)
         .map(|ref post| warp::reply::json(post))
         .map_err(|e| e.into())
 }
