@@ -13,7 +13,7 @@ pub fn establish_pool(database_url: String) -> PgPool {
         Pool::new(manager).expect("Postgres connection pool could not be created")
 }
 
-/// Returns first 5 published blog posts
+/// Return first 5 published blog posts
 pub fn load_posts_5_published(connection: PooledPg) -> Result<Vec<Post>> {
         debug!("Load first 5 published blog posts");
 
@@ -26,14 +26,28 @@ pub fn load_posts_5_published(connection: PooledPg) -> Result<Vec<Post>> {
                 .map_err(|e| ServerError::Database(e))
 }
 
-/// Creates new post
-pub fn insert_post(create: NewPost, connection: PooledPg) -> Result<Post> {
+/// Create new post
+pub fn insert_post(create: NewPost, conn: PooledPg) -> Result<Post> {
         debug!("Create blog post {:?}", &create);
 
         use super::schema::posts;
 
         diesel::insert_into(posts::table)
                 .values(&create)
-                .get_result(&connection)
+                .get_result(&conn)
                 .map_err(|e| ServerError::Database(e))
+}
+
+/// Update a post
+pub fn update_post(id: i32, update: NewPost, conn: PooledPg) -> Result<Post> {
+        debug!("Update blog post {}: {:?}", id, update);
+
+        use super::schema::posts::dsl::{posts, title, body};
+
+        diesel::update(posts.find(id))
+                .set((title.eq(update.title), body.eq(update.body)))
+                .get_result(&conn)
+                .map_err(|e| ServerError::Database(e))
+                
+
 }

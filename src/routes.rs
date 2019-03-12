@@ -1,4 +1,5 @@
-use super::database::*;
+use super::database;
+use super::database::{PgPool, PooledPg};
 use super::models::*;
 use warp::{http::StatusCode, Filter};
 
@@ -19,6 +20,8 @@ pub fn routes(database_pool: PgPool) -> warp::filters::BoxedFilter<(impl warp::R
 
     let blog_index = blog.and(warp::path::end());
 
+    let blog_id = blog.and(warp::path::param::<u16>()).and(warp::path::end());
+
     // GET /api/v1/blog
     let blog_list = warp::get2()
         .and(blog_index)
@@ -26,13 +29,20 @@ pub fn routes(database_pool: PgPool) -> warp::filters::BoxedFilter<(impl warp::R
         .and_then(list_posts);
 
     // POST /api/v1/blog
-    let blog_post = warp::post2()
+    let blog_create = warp::post2()
         .and(blog_index)
         .and(json_body)
         .and(pg.clone())
         .and_then(create_post);
 
-    let api = blog_list.or(blog_post);
+    // PUT /api/v1/blog/:id
+    let blog_update = warp::put2()
+        .and(blog_id)
+        .and(json_body)
+        .and(pg.clone())
+        .and_then(update_post);
+
+    let api = blog_list.or(blog_create).or(blog_update);
 
     let index = warp::fs::file("static/index.html").and(warp::path::end());
 
@@ -41,16 +51,27 @@ pub fn routes(database_pool: PgPool) -> warp::filters::BoxedFilter<(impl warp::R
 
 // API Handlers
 
-///GET /api/v1/blog
+/// GET /api/v1/blog
 fn list_posts(conn: PooledPg) -> Result<impl warp::Reply, warp::Rejection> {
-    load_posts_5_published(conn)
+    database::load_posts_5_published(conn)
         .map(|ref posts| warp::reply::json(posts))
         .map_err(|e| e.into())
 }
 
 /// POST /api/v1/blog
 fn create_post(new: NewPost, conn: PooledPg) -> Result<impl warp::Reply, warp::Rejection> {
-    insert_post(new, conn)
+    database::insert_post(new, conn)
         .map(|ref post| warp::reply::with_status(warp::reply::json(post), StatusCode::CREATED))
+        .map_err(|e| e.into())
+}
+
+/// PUT /api/v1/blog/:id
+fn update_post(
+    id: u16,
+    update: NewPost,
+    conn: PooledPg,
+) -> Result<impl warp::Reply, warp::Rejection> {
+    database::update_post(id.into(), update, conn)
+        .map(|ref post| warp::reply::json(post))
         .map_err(|e| e.into())
 }
