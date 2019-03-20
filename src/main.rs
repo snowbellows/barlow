@@ -1,8 +1,9 @@
-pub mod database;
-pub mod models;
-pub mod result;
-pub mod routes;
-pub mod schema;
+mod database;
+mod models;
+mod result;
+mod routes;
+mod schema;
+mod authentication;
 
 #[macro_use]
 extern crate log;
@@ -14,6 +15,7 @@ extern crate dotenv;
 extern crate warp;
 #[macro_use]
 extern crate diesel;
+extern crate frank_jwt;
 
 use self::database::establish_pool;
 use self::routes::routes;
