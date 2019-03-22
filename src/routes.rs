@@ -22,8 +22,8 @@ pub fn routes(database_pool: PgPool) -> warp::filters::BoxedFilter<(impl warp::R
 
     let blog_id = blog.and(warp::path::param::<u16>());
 
-    //POST /api/v1/login
-    let api_login = warp::post2().and(api_v1).and(warp::header("Authorization"));
+    //GET /api/v1/login
+//    let api_login = warp::get2().and(api_v1).and(pg.clone()).and(warp::header("Authorization"));
 
     // GET /api/v1/blog
     let blog_list = warp::get2()
@@ -61,8 +61,10 @@ pub fn routes(database_pool: PgPool) -> warp::filters::BoxedFilter<(impl warp::R
 
 // API Handlers
 
-/// POST /api/v1/login
-fn login()
+/// GET /api/v1/login
+// fn login(auth_head: String, conn: PooledPg) -> Result<impl warp::Reply, warp::Rejection> {
+    
+// }
 
 /// GET /api/v1/blog
 fn list_posts(conn: PooledPg) -> Result<impl warp::Reply, warp::Rejection> {
