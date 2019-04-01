@@ -1,4 +1,4 @@
-module Main exposing (Model, Msg(..), init, main, subscriptions, update, view, viewLink)
+module Main exposing (Model, Msg(..), init, main, subscriptions, update, view, navLink)
 
 import Browser
 import Browser.Navigation as Nav
@@ -85,17 +85,21 @@ view : Model -> Browser.Document Msg
 view model =
     { title = "Phil Barlow"
     , body =
-        [ text "The current URL is: "
-        , b [] [ text (Url.toString model.url) ]
-        , ul []
-            [ viewLink "/"
-            , viewLink "/books"
-            , viewLink "/about"
-            , viewLink "/blog"
-            ]
+        [ navBar
         ]
     }
 
-viewLink : String -> Html msg
-viewLink path =
-    li [] [ a [ href path ] [ text path ] ]
+navBar : Html msg
+navBar = 
+    nav [ class "flexContainer", class "whiteBackground"] 
+        [ div [class "nav", class "flexItem", class "flexStart"] [text "Phil Barlow"]
+        , ul [class "nav", class "flexContainer", class "flexEnd"] 
+            [ navLink "/books" "Books"
+            , navLink "/blog" "Blog"
+            , navLink "/contact" "Contact"
+            ]
+        ]
+
+navLink : String -> String -> Html msg
+navLink path labelText =
+    li [] [ a [ href path ] [ text labelText ] ]
