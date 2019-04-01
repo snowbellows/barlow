@@ -54,7 +54,7 @@ pub fn routes(database_pool: PgPool) -> warp::filters::BoxedFilter<(impl warp::R
 
     let api = blog_list.or(blog_create).or(blog_update).or(blog_publish);
 
-    let index = warp::fs::file("static/index.html").and(warp::path::end());
+    let index = warp::fs::dir("static").and(warp::path::end());
 
     api.or(index).with(warp::log("barlow")).boxed()
 }

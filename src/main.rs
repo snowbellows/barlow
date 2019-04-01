@@ -15,6 +15,7 @@ extern crate dotenv;
 extern crate warp;
 #[macro_use]
 extern crate diesel;
+extern crate chrono;
 
 use self::database::establish_pool;
 use self::routes::routes;
