@@ -14,7 +14,7 @@ pub enum ServerError {
 impl fmt::Display for ServerError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            ServerError::Unknown => write!(f, "unkown server error occured"),
+            ServerError::Unknown => write!(f, "unknown server error occured"),
             ServerError::Database(ref e) => e.fmt(f),
         }
     }
