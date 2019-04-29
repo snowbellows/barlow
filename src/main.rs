@@ -1,27 +1,6 @@
-mod database;
-mod models;
-mod result;
-mod routes;
-mod schema;
-mod authentication;
-
-#[macro_use]
-extern crate log;
-extern crate pretty_env_logger;
-extern crate serde;
-#[macro_use]
-extern crate serde_derive;
-extern crate dotenv;
-extern crate warp;
-#[macro_use]
-extern crate diesel;
-extern crate chrono;
-extern crate scrypt;
-
-use self::database::establish_pool;
-use self::routes::routes;
 use dotenv::dotenv;
 use std::env;
+use barlow_spa::run;
 
 fn main() {
     dotenv().ok();
@@ -36,7 +15,5 @@ fn main() {
 
     pretty_env_logger::init();
 
-    let database_pool = establish_pool(database_url);
-
-    warp::serve(routes(database_pool)).run(([127, 0, 0, 1], 3030));
+    run(database_url)
 }
