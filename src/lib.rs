@@ -1,9 +1,9 @@
+mod authentication;
 mod database;
 mod models;
 mod result;
 mod routes;
 mod schema;
-mod authentication;
 
 #[macro_use]
 extern crate log;
@@ -18,8 +18,8 @@ extern crate diesel;
 extern crate chrono;
 extern crate scrypt;
 
-use self::routes::routes;
 use self::database::establish_pool;
+use self::routes::routes;
 
 pub fn run(database_url: String) {
     let database_pool = establish_pool(database_url);

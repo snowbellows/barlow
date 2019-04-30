@@ -1,6 +1,6 @@
+use barlow_spa::run;
 use dotenv::dotenv;
 use std::env;
-use barlow_spa::run;
 
 fn main() {
     dotenv().ok();
