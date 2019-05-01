@@ -1,9 +1,12 @@
-module Main exposing (Model, Msg(..), init, main, subscriptions, update, view, navLink)
+module Main exposing (Model, Msg(..), init, main, navLink, subscriptions, update, view)
 
 import Browser
 import Browser.Navigation as Nav
-import Html exposing (..)
-import Html.Attributes exposing (..)
+import Css exposing (..)
+import Html exposing (Html)
+import Html.Styled as Styled exposing (..)
+import Html.Styled.Attributes exposing (css, href, src)
+import Html.Styled.Events exposing (onClick)
 import Url
 
 
@@ -85,21 +88,78 @@ view : Model -> Browser.Document Msg
 view model =
     { title = "Phil Barlow"
     , body =
-        [ navBar
-        ]
+        List.map toUnstyled
+            [ navBar
+            ]
     }
 
-navBar : Html msg
-navBar = 
-    nav [ class "flexContainer", class "whiteBackground"] 
-        [ div [class "nav", class "flexItem", class "flexStart"] [text "Phil Barlow"]
-        , ul [class "nav", class "flexContainer", class "flexEnd"] 
+
+navBar : Styled.Html msg
+navBar =
+    nav [ css [ flexContainer, whiteBackground ] ]
+        [ div [ css [ navStyle, flexItem, flexStartStyle ] ] [ text "Phil Barlow" ]
+        , ul [ css [ navStyle ], css [ flexContainer, flexEndStyle ] ]
             [ navLink "/books" "Books"
             , navLink "/blog" "Blog"
             , navLink "/contact" "Contact"
             ]
         ]
 
-navLink : String -> String -> Html msg
+
+navLink : String -> String -> Styled.Html msg
 navLink path labelText =
     li [] [ a [ href path ] [ text labelText ] ]
+
+
+
+-- STYLES
+
+
+flexContainer : Style
+flexContainer =
+    Css.batch
+        [ displayFlex
+        ]
+
+
+flexItem : Style
+flexItem =
+    Css.batch
+        [ flex (int 1)
+        ]
+
+
+flexStartStyle : Style
+flexStartStyle =
+    Css.batch
+        [ justifyContent flexStart
+        ]
+
+
+flexEndStyle : Style
+flexEndStyle =
+    Css.batch
+        [ justifyContent flexEnd
+        ]
+
+
+whiteBackground : Style
+whiteBackground =
+    Css.batch
+        [ backgroundColor (hex "FFFFFF") ]
+
+
+navStyle : Style
+navStyle =
+    Css.batch
+        [ listStyle none
+        ]
+
+
+navAStyle : Style
+navAStyle =
+    Css.batch
+        [ textDecoration none
+        , display block
+        , padding2 (Css.em 0) (Css.em 1)
+        ]
