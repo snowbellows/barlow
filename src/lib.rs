@@ -4,6 +4,9 @@ mod models;
 mod result;
 mod routes;
 mod schema;
+mod test_utils;
+#[cfg(test)]
+mod tests;
 
 #[macro_use]
 extern crate log;
