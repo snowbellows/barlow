@@ -45,7 +45,7 @@ mod tests {
         #[test]
         fn insert_user_returns_an_input_error_for_empty_strings() {
                 //Tests empty user handled correctly
-                
+
                 let pool = create_pool();
                 let new = NewUser {
                         name: "".to_string(),
@@ -64,7 +64,7 @@ mod tests {
 
         #[test]
         fn it_inserts_single_user_with_hashed_pass() {
-                //Tests that password is properly hashed and inserted
+                //Tests that password is properly hashed and inserted in DB
 
                 let pool = create_pool();
                 let new = NewUser {
