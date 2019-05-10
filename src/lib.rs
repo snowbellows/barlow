@@ -4,6 +4,7 @@ mod models;
 mod result;
 mod routes;
 mod schema;
+#[cfg(test)]
 mod test_utils;
 
 #[macro_use]
@@ -17,6 +18,7 @@ extern crate warp;
 #[macro_use]
 extern crate diesel;
 extern crate chrono;
+extern crate proptest;
 extern crate scrypt;
 
 use self::database::establish_pool;

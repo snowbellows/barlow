@@ -17,7 +17,7 @@ pub struct NewPost {
     pub body: String,
 }
 
-#[derive(Queryable)]
+#[derive(Queryable, Debug, PartialEq)]
 pub struct User {
     pub id: i32,
     pub name: String,

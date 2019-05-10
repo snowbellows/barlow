@@ -5,10 +5,11 @@ use warp;
 
 pub type Result<T> = std::result::Result<T, ServerError>;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum ServerError {
     Unknown,
     Database(diesel::result::Error),
+    Input(String),
 }
 
 impl fmt::Display for ServerError {
@@ -16,6 +17,7 @@ impl fmt::Display for ServerError {
         match *self {
             ServerError::Unknown => write!(f, "unknown server error occured"),
             ServerError::Database(ref e) => e.fmt(f),
+            ServerError::Input(ref message) => write!(f, "input error {}", message),
         }
     }
 }
@@ -25,6 +27,7 @@ impl error::Error for ServerError {
         match *self {
             ServerError::Unknown => "unknown error",
             ServerError::Database(ref e) => e.description(),
+            ServerError::Input(ref message) => message,
         }
     }
 
@@ -32,6 +35,7 @@ impl error::Error for ServerError {
         match *self {
             ServerError::Unknown => None,
             ServerError::Database(ref e) => Some(e),
+            ServerError::Input(_) => None,
         }
     }
 }
