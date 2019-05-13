@@ -2,7 +2,7 @@ use super::schema::posts;
 use super::schema::users;
 use chrono::NaiveDateTime;
 
-#[derive(Queryable, Serialize)]
+#[derive(Queryable, Debug, Serialize, PartialEq)]
 pub struct Post {
     pub id: i32,
     pub title: String,

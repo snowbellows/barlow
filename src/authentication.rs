@@ -35,24 +35,19 @@ pub fn insert_user(create: NewUser, conn: PooledPg) -> Result<User> {
 #[cfg(test)]
 mod tests {
         use super::*;
-        use crate::database::PgPool;
-        use crate::test_utils::{connection, create_pool};
+        use crate::test_utils::test_connection;
         use proptest::prelude::*;
-        use std::cell::RefCell;
-
-        thread_local! {static GLOBAL_POOL : RefCell<PgPool> = RefCell::new(create_pool());}
 
         #[test]
         fn insert_user_returns_an_input_error_for_empty_strings() {
                 //Tests empty user handled correctly
 
-                let pool = create_pool();
                 let new = NewUser {
                         name: "".to_string(),
                         password: "".to_string(),
                 };
 
-                let conn = connection(&pool);
+                let conn = test_connection();
 
                 assert_eq!(
                         insert_user(new, conn),
@@ -66,12 +61,12 @@ mod tests {
         fn it_inserts_single_user_with_hashed_pass() {
                 //Tests that password is properly hashed and inserted in DB
 
-                let pool = create_pool();
                 let new = NewUser {
                         name: "testName".to_string(),
                         password: "testPassword".to_string(),
                 };
-                let conn = connection(&pool);
+
+                let conn = test_connection();
 
                 let stored_user = insert_user(new, conn).expect("insert_user should not fail");
 
@@ -81,13 +76,12 @@ mod tests {
         proptest! {
         #[test] #[ignore] //too expensive property based version of inserts_single_user unit test, takes >1h to run
         fn it_inserts_user_with_hashed_pass(s1 in "\\w+", s2 in "\\w+") {
-
-                let pool = create_pool();
                 let new = NewUser {
                         name: s1,
                         password: s2.clone(),
                 };
-                let conn = connection(&pool);
+
+                let conn = test_connection();
 
                 let stored_user = insert_user(new, conn).expect("insert_user should not fail");
 

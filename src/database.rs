@@ -42,14 +42,12 @@ pub fn insert_post(create: NewPost, conn: PooledPg) -> Result<Post> {
 pub fn update_post(id: i32, update: NewPost, conn: PooledPg) -> Result<Post> {
         debug!("Update blog post {}: {:?}", id, update);
 
-        use super::schema::posts::dsl::{posts, title, body};
+        use super::schema::posts::dsl::{body, posts, title};
 
         diesel::update(posts.find(id))
                 .set((title.eq(update.title), body.eq(update.body)))
                 .get_result(&conn)
                 .map_err(|e| ServerError::Database(e))
-                
-
 }
 
 /// Publish a post
@@ -62,6 +60,64 @@ pub fn publish_post(id: i32, conn: PooledPg) -> Result<Post> {
                 .set(published.eq(true))
                 .get_result(&conn)
                 .map_err(|e| ServerError::Database(e))
-                
+}
 
+#[cfg(test)]
+mod tests {
+        use super::*;
+        use crate::test_utils::test_connection;
+        use proptest::prelude::*;
+
+        #[test]
+        fn it_publishes_blog_post() {
+                let conn = test_connection();
+
+                let returned_post = publish_post(1, conn).expect("publish_post should not fail");
+
+                assert_eq!(returned_post.published, true)
+        }
+
+        proptest! {
+        #[test]
+        fn it_inserts_blog_post(s1 in "\\w+", s2 in "\\w+") {
+                let new = NewPost {
+                        title: s1.clone(),
+                        body: s2.clone(),
+                };
+
+                let conn = test_connection();
+
+                let returned_post = insert_post(new, conn).expect("insert_user should not fail");
+
+                let correct_post = Post {
+                        id: returned_post.id.clone(),
+                        title: s1,
+                        body: s2,
+                        published: false,
+                };
+
+                assert_eq!(returned_post, correct_post)
+        }
+
+        #[test]
+        fn it_updates_blog_post(s1 in "\\w+", s2 in "\\w+") {
+                let new = NewPost {
+                        title: s1.clone(),
+                        body: s2.clone(),
+                };
+
+                let conn = test_connection();
+
+                let returned_post = update_post(1, new, conn).expect("update_post should not fail");
+
+                let correct_post = Post {
+                        id: 1,
+                        title: s1,
+                        body: s2,
+                        published: returned_post.published.clone(),
+                };
+
+                assert_eq!(returned_post, correct_post)
+        }
+        }
 }
