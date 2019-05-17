@@ -4,6 +4,9 @@ table! {
         title -> Varchar,
         body -> Text,
         published -> Bool,
+        created -> Timestamptz,
+        category -> Nullable<Varchar>,
+        tags -> Array<Text>,
     }
 }
 

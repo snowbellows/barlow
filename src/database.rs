@@ -14,8 +14,8 @@ pub fn establish_pool(database_url: String) -> PgPool {
 }
 
 /// Return first 5 published blog posts
-pub fn load_posts_5_published(connection: PooledPg) -> Result<Vec<Post>> {
-        debug!("Load first 5 published blog posts");
+pub fn load_posts_5_published(page: i32, connection: PooledPg) -> Result<Vec<Post>> {
+        debug!("Load page {:?} of 5 published blog posts", &page);
 
         use super::schema::posts;
 
@@ -42,10 +42,15 @@ pub fn insert_post(create: NewPost, conn: PooledPg) -> Result<Post> {
 pub fn update_post(id: i32, update: NewPost, conn: PooledPg) -> Result<Post> {
         debug!("Update blog post {}: {:?}", id, update);
 
-        use super::schema::posts::dsl::{body, posts, title};
+        use super::schema::posts::dsl::{body, category, posts, tags, title};
 
         diesel::update(posts.find(id))
-                .set((title.eq(update.title), body.eq(update.body)))
+                .set((
+                        title.eq(update.title),
+                        body.eq(update.body),
+                        category.eq(update.category),
+                        tags.eq(update.tags),
+                ))
                 .get_result(&conn)
                 .map_err(|e| ServerError::Database(e))
 }
@@ -68,6 +73,21 @@ mod tests {
         use crate::test_utils::test_connection;
         use proptest::prelude::*;
 
+        fn arb_new_post() -> impl Strategy<Value = NewPost> {
+                (
+                        "\\w+",
+                        "\\w+",
+                        prop::option::of("\\w+"),
+                        prop::collection::vec("\\w+", 0..10),
+                )
+                        .prop_map(|(title, body, category, tags)| NewPost {
+                                title,
+                                body,
+                                category,
+                                tags,
+                        })
+        }
+
         #[test]
         fn it_publishes_blog_post() {
                 let conn = test_connection();
@@ -79,42 +99,39 @@ mod tests {
 
         proptest! {
         #[test]
-        fn it_inserts_blog_post(s1 in "\\w+", s2 in "\\w+") {
-                let new = NewPost {
-                        title: s1.clone(),
-                        body: s2.clone(),
-                };
+        fn it_inserts_blog_post(new in arb_new_post()) {
 
                 let conn = test_connection();
 
-                let returned_post = insert_post(new, conn).expect("insert_user should not fail");
+                let returned_post = insert_post(new.clone(), conn).expect("insert_user should not fail");
 
                 let correct_post = Post {
                         id: returned_post.id.clone(),
-                        title: s1,
-                        body: s2,
+                        title: new.title,
+                        body: new.body,
                         published: false,
+                        created: returned_post.created.clone(),
+                        category: new.category,
+                        tags: new.tags,
                 };
 
                 assert_eq!(returned_post, correct_post)
         }
 
         #[test]
-        fn it_updates_blog_post(s1 in "\\w+", s2 in "\\w+") {
-                let new = NewPost {
-                        title: s1.clone(),
-                        body: s2.clone(),
-                };
-
+        fn it_updates_blog_post(new in arb_new_post()) {
                 let conn = test_connection();
 
-                let returned_post = update_post(1, new, conn).expect("update_post should not fail");
+                let returned_post = update_post(1, new.clone(), conn).expect("update_post should not fail");
 
                 let correct_post = Post {
                         id: 1,
-                        title: s1,
-                        body: s2,
+                        title: new.title,
+                        body: new.body,
                         published: returned_post.published.clone(),
+                        created: returned_post.created.clone(),
+                        category: new.category,
+                        tags: new.tags,
                 };
 
                 assert_eq!(returned_post, correct_post)

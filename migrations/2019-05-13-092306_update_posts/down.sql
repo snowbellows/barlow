@@ -1,0 +1,4 @@
+ALTER TABLE posts
+DROP COLUMN created,
+DROP COLUMN category,
+DROP COLUMN tags;
