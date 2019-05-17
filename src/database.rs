@@ -75,6 +75,7 @@ mod tests {
         use crate::test_utils::test_connection;
         use proptest::prelude::*;
 
+        ///NewPost Proptest Strategy
         fn arb_new_post() -> impl Strategy<Value = NewPost> {
                 (
                         "\\w+",
