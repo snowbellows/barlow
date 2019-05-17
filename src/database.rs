@@ -21,7 +21,9 @@ pub fn load_posts_5_published(page: i32, connection: PooledPg) -> Result<Vec<Pos
 
         posts::table
                 .filter(posts::published.eq(true))
+                .order(posts::created.desc())
                 .limit(5)
+                .offset((page * 5 - 5).into())
                 .load::<Post>(&connection)
                 .map_err(|e| ServerError::Database(e))
 }
