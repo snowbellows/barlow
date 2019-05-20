@@ -59,5 +59,5 @@ pub struct NewUser {
 
 #[derive(Deserialize, Copy, Clone)]
 pub struct Page {
-    pub page: i32,
+    pub page: Option<i32>,
 }

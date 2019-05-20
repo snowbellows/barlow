@@ -18,18 +18,17 @@ pub fn routes(database_pool: PgPool) -> warp::filters::BoxedFilter<(impl warp::R
 
     let blog = api_v1.and(warp::path("blog"));
 
-    let blog_get = blog.and(warp::query());
-
     let blog_post = blog.and(warp::path::end());
 
     let blog_id = blog.and(warp::path::param::<u16>());
 
     //GET /api/v1/login
-//    let api_login = warp::get2().and(api_v1).and(pg.clone()).and(warp::header("Authorization"));
+    //    let api_login = warp::get2().and(api_v1).and(pg.clone()).and(warp::header("Authorization"));
 
-    // GET /api/v1/blog
+    // GET /api/v1/blog or /api/v1/blog?page=XX
     let blog_list = warp::get2()
-        .and(blog_get)
+        .and(blog)
+        .and(warp::query())
         .and(pg.clone())
         .and_then(list_posts);
 
@@ -65,19 +64,25 @@ pub fn routes(database_pool: PgPool) -> warp::filters::BoxedFilter<(impl warp::R
 
 /// GET /api/v1/login
 // fn login(auth_head: String, conn: PooledPg) -> Result<impl warp::Reply, warp::Rejection> {
-    
+
 // }
 
-/// GET /api/v1/blog
+/// GET /api/v1/blog or /api/v1/blog?page=XX
 fn list_posts(page: Page, conn: PooledPg) -> Result<impl warp::Reply, warp::Rejection> {
-    database::load_posts_5_published(page.page, conn)
+    let page_number = if let Some(page_number) = page.page {
+        page_number
+    } else {
+        1
+    };
+
+    database::load_posts_5_published(page_number, &conn)
         .map(|ref posts| warp::reply::json(posts))
         .map_err(|e| e.into())
 }
 
 /// POST /api/v1/blog
 fn create_post(new: NewPost, conn: PooledPg) -> Result<impl warp::Reply, warp::Rejection> {
-    database::insert_post(new, conn)
+    database::insert_post(new, &conn)
         .map(|ref post| warp::reply::with_status(warp::reply::json(post), StatusCode::CREATED))
         .map_err(|e| e.into())
 }
@@ -88,14 +93,14 @@ fn update_post(
     update: NewPost,
     conn: PooledPg,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    database::update_post(id.into(), update, conn)
+    database::update_post(id.into(), update, &conn)
         .map(|ref post| warp::reply::json(post))
         .map_err(|e| e.into())
 }
 
 /// PUT /api/v1/blog/:id/publish
 fn publish_post(id: u16, conn: PooledPg) -> Result<impl warp::Reply, warp::Rejection> {
-    database::publish_post(id.into(), conn)
+    database::publish_post(id.into(), &conn)
         .map(|ref post| warp::reply::json(post))
         .map_err(|e| e.into())
 }
