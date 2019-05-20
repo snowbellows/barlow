@@ -25,7 +25,7 @@ pub fn routes(database_pool: PgPool) -> warp::filters::BoxedFilter<(impl warp::R
     //GET /api/v1/login
     //    let api_login = warp::get2().and(api_v1).and(pg.clone()).and(warp::header("Authorization"));
 
-    // GET /api/v1/blog or /api/v1/blog?page=XX
+    // GET /api/v1/blog or /api/v1/blog?page
     let blog_list = warp::get2()
         .and(blog)
         .and(warp::query())
@@ -42,6 +42,7 @@ pub fn routes(database_pool: PgPool) -> warp::filters::BoxedFilter<(impl warp::R
     // PUT /api/v1/blog/:id
     let blog_update = warp::put2()
         .and(blog_id)
+        .and(warp::path::end())
         .and(json_body)
         .and(pg.clone())
         .and_then(update_post);
@@ -50,10 +51,18 @@ pub fn routes(database_pool: PgPool) -> warp::filters::BoxedFilter<(impl warp::R
     let blog_publish = warp::put2()
         .and(blog_id)
         .and(warp::path("publish"))
+        .and(warp::path::end())
         .and(pg.clone())
         .and_then(publish_post);
 
-    let api = blog_list.or(blog_create).or(blog_update).or(blog_publish);
+    // DELETE /api/v1/blog/:id
+    let blog_delete = warp::delete2()
+        .and(blog_id)
+        .and(warp::path::end())
+        .and(pg.clone())
+        .and_then(delete_post);
+
+    let api = blog_list.or(blog_create).or(blog_update).or(blog_publish).or(blog_delete);
 
     let index = warp::fs::dir("static").and(warp::path::end());
 
@@ -67,7 +76,7 @@ pub fn routes(database_pool: PgPool) -> warp::filters::BoxedFilter<(impl warp::R
 
 // }
 
-/// GET /api/v1/blog or /api/v1/blog?page=XX
+/// GET /api/v1/blog or /api/v1/blog?page
 fn list_posts(page: Page, conn: PooledPg) -> Result<impl warp::Reply, warp::Rejection> {
     let page_number = if let Some(page_number) = page.page {
         page_number
@@ -103,4 +112,11 @@ fn publish_post(id: u16, conn: PooledPg) -> Result<impl warp::Reply, warp::Rejec
     database::publish_post(id.into(), &conn)
         .map(|ref post| warp::reply::json(post))
         .map_err(|e| e.into())
+}
+
+/// DELETE /api/v1/blog/:id
+fn delete_post(id: u16, conn: PooledPg) -> Result<impl warp::Reply, warp::Rejection> {
+    database::delete_post(id.into(), &conn)
+    .map(|ref post| warp::reply::json(post))
+    .map_err(|e| e.into())
 }
